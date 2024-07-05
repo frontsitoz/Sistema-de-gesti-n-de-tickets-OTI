@@ -1,10 +1,11 @@
 package ticketera;
 import enums.Areas;
+import enums.Estados;
 import enums.TipoIncidente;
 
 import java.util.*;
 
-public class GestorTicket {
+public class GestorTicket implements TicketEstado {
     private LinkedList<Ticket> tickets;
     private GestorUsuario listaUsuarios;
 
@@ -12,8 +13,17 @@ public class GestorTicket {
         this.tickets = new LinkedList<>();
         this.listaUsuarios = listaUsuarios;
         //Tickets de prueba
-        tickets.add(new Ticket("Office","office","baja","user1","Oficina de Administración"));
-        tickets.add(new Ticket("Office","office","baja","user1","Oficina de asesoría jurídica"));
+        tickets.add(new Ticket("Office",TipoIncidente.PROBLEMAS_DE_RED,TipoIncidente.PROBLEMAS_DE_RED,"user1",Areas.OFICINA_DE_ADMINISTRACION));
+        tickets.add(new Ticket("Office",TipoIncidente.APLICACIONES,TipoIncidente.APLICACIONES,"user1",Areas.OFICINA_DE_ASESORIA_JURIDICA));
+    }
+
+    public TipoIncidente asignarTipoIncidencia(int codigo){
+        for(TipoIncidente tipoIncidente : TipoIncidente.values()){
+            if(tipoIncidente.getCodigo()== codigo){
+                return tipoIncidente;
+            }
+        }
+        return null;
     }
 
     public void crearTicket (Usuario usuarioLogeado){
@@ -50,25 +60,28 @@ public class GestorTicket {
             }
         } while (tempIncidente == null);
 
-        String area = ((UsuarioComun) usuarioLogeado).getAreaTrabajo();
-        String descripcion = tempIncidente.getDescripcion();
-        String prioridad = tempIncidente.getPrioridad();
-
+        Areas area = ((UsuarioComun) usuarioLogeado).getAreaTrabajo();
+        //String descripcion = tempIncidente.getDescripcion();
+        //String prioridad = tempIncidente.getPrioridad();
         String solicitante = usuarioLogeado.getUsername();
-        this.tickets.add(new Ticket(resumen, descripcion, prioridad, solicitante, area));
-        System.out.println("Se ha generado el Ticket #" + tickets.peekLast().getId());
+
+        this.tickets.add(new Ticket(resumen, tempIncidente, tempIncidente, solicitante, area));
+        System.out.println("Se ha generado el Ticket #" + tickets.getLast().getId());
     }
 
-    public TipoIncidente asignarTipoIncidencia(int codigo){
-        for(TipoIncidente tipoIncidente : TipoIncidente.values()){
-            if(tipoIncidente.getCodigo()== codigo){
-                return tipoIncidente;
+    public void consultarTickets(){
+        boolean ticketsPendientes = false;
+        for(Ticket tickets : tickets){
+            if(!tickets.getEstado().equalsIgnoreCase("Resuelto")){
+                if(!ticketsPendientes){
+                    Ticket.imprimirEncabezadoTabla();
+                    ticketsPendientes = true;
+                }
+                System.out.println(tickets);
             }
         }
-        return null;
+
     }
-
-
 
     public Ticket buscarTicketPorID (){
         Scanner scanner = new Scanner(System.in);
@@ -89,19 +102,33 @@ public class GestorTicket {
                 return ticket;
             }
         }
-        System.out.println("Este ticket no se encuentra registrado");
         return null;
     }
 
+    public void imprimirTicketsPorID (){
+        Ticket ticket = buscarTicketPorID();
+        if(ticket != null){
+            Ticket.imprimirEncabezadoTabla();
+            System.out.println(ticket);
+        }
+        else {
+            System.out.println("Este ticket no se encuentra registrado");
+        }
+    }
+
     public void buscarTicketPorPrioridad (){
-        //List<Ticket> ticketsPrioridad = new ArrayList<>();
         boolean ticketsPendientes = false;
         Scanner scanner = new Scanner(System.in);
         boolean prioridadValida = false;
         String prioridad = "";
 
         while(!prioridadValida) {
-            System.out.println("Ingrese la prioridad (1: Baja, 2: Media, 3: Alta):");
+
+            System.out.println("""
+                    Ingrese la prioridad:
+                    1. Baja
+                    2. Media
+                    3. Alta""");
             try {
                 int codPrioridad = Integer.parseInt(scanner.nextLine());
                 switch (codPrioridad){
@@ -124,59 +151,47 @@ public class GestorTicket {
 
         for (Ticket ticket : tickets){
             if(ticket.getPrioridad().equalsIgnoreCase(prioridad) && !ticket.getEstado().equalsIgnoreCase("resuelto")){
-                //ticketsPrioridad.add(ticket);
                 if(!ticketsPendientes) {
                     ticketsPendientes = true;
-                    Ticket.printTableHeader();
+                    Ticket.imprimirEncabezadoTabla();
                 }
                 System.out.println(ticket);
             }
         }
-
         if(!ticketsPendientes){
             System.out.println("No hay tickets pendientes con este nivel de prioridad");
         }
-
-        /*if(!ticketsPrioridad.isEmpty()){
-            Ticket.printTableHeader();
-        System.out.println(ticketsPrioridad);
-        } else {
-            System.out.println("No hay tickets pendientes con este nivel de prioridad");
-        }*/
     }
 
     public void cambiarEstadoTicket (){
         Ticket ticket = buscarTicketPorID();
         Scanner scanner = new Scanner(System.in);
-        boolean estadoValido = false;
-        String nuevoEstado = "";
-        while(!estadoValido && ticket !=null) {
-            System.out.println("Ingrese el nuevo estado del ticket (1: Asignado, 2: En proceso, 3: Pendiente, 4: Resuelto): ");
-            try{
-            int codEstado = Integer.parseInt(scanner.nextLine());
-            switch (codEstado){
-                case 1: nuevoEstado = "Asignado";
-                estadoValido = true;
-                break;
-                case 2: nuevoEstado = "En proceso";
-                    estadoValido = true;
-                    break;
-                case 3: nuevoEstado = "Pendiente";
-                    estadoValido = true;
-                    break;
-                case 4: nuevoEstado = "Resuelto";
-                    estadoValido = true;
-                    break;
-                default:
-                    System.out.println("Por favor ingrese un código de estado válido");
+        Estados nuevoEstado;
+
+        int codigo = 0;
+        if(ticket != null){
+            System.out.println("Ingrese el nuevo estado del ticket:");
+            listarEstados();
+
+            boolean codigoValido = false;
+            while (!codigoValido) {
+                try {
+                    codigo = Integer.parseInt(scanner.nextLine());
+                    if(codigo>0 && codigo<=Estados.values().length){
+                        codigoValido = true;
+                    } else {
+                        System.out.println("Por favor ingrese un codigo válido");
+                        listarEstados();
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("Valor ingresado no válido");
+                }
             }
-            }catch (NumberFormatException e){
-                System.out.println("Valor ingresado no válido");
-            }
-        }
-        if (ticket != null) {
+            nuevoEstado = obtenerEstado(codigo+1);
             ticket.setEstado(nuevoEstado);
-            System.out.println("Estado de ticket "+ticket.getId()+" actualizado");
+            System.out.println("Estado de Ticket #"+ticket.getId()+" actualizado");
+        }else {
+            System.out.println("Este Ticket no está registrado");
         }
     }
 
@@ -184,21 +199,42 @@ public class GestorTicket {
         Scanner scanner = new Scanner(System.in);
         Ticket ticket = buscarTicketPorID();
         if (ticket != null){
-                boolean usuarioValidado = false;
-                while(!usuarioValidado) {
-                    System.out.println("Ingrese el usuario que se asignará el ticket: ");
-                    String username = scanner.nextLine();
+            boolean usuarioValidado = false;
+            while(!usuarioValidado) {
+                System.out.println("Ingrese el usuario que se asignará el ticket: ");
+                String username = scanner.nextLine();
 
-                    Usuario usuarioAsignado = listaUsuarios.buscarUsuarioXUsername(username);
-                    if (usuarioAsignado != null) {
-                        usuarioValidado = true;
-                        ticket.setAsignadoA(usuarioAsignado.getUsername());
-                        ticket.setEstado("asignado");
-                        System.out.println("El ticket " + ticket.getId() + " ha sido asignado al usuario: " + username);
-                    }
+                Usuario usuarioAsignado = listaUsuarios.buscarUsuarioXUsername(username);
+                if (usuarioAsignado != null) {
+                    usuarioValidado = true;
+                    ticket.setResponsable(usuarioAsignado.getUsername());
+                    ticket.setEstado(Estados.ASIGNADO);
+                    System.out.println("El ticket " + ticket.getId() + " ha sido asignado al usuario: " + username);
                 }
+            }
+        } else {
+            System.out.println("Este ticket no está registrado");
         }
     }
 
+    @Override
+    public Estados obtenerEstado(int codigo) {
+        for(Estados estado : Estados.values()){
+            if (estado.getCodigo()==codigo){
+                return estado;
+            }
+        }
+        return null;
+    }
 
+    @Override
+    public void listarEstados() {
+        int num = 1;
+        for(Estados estado : Estados.values()){
+            if(estado.getCodigo()!=1) {
+                System.out.println(num + ". " + estado.getDescripcion());
+                num++;
+            }
+        }
+    }
 }

@@ -2,8 +2,8 @@ package enums;
 
 public enum TipoIncidente {
     APLICACIONES (1,"Error de aplicativo","Baja"),
-    LENTITUD_DE_SISTEMA(2,"Lentitud de Sistema Operativo","Baja"),
-    HARDWARE_DEFECTUOSO(3, "Hardware defectuoso", "Media"),
+    HARDWARE_DEFECTUOSO(2, "Hardware defectuoso", "Media"),
+    LENTITUD_DE_SISTEMA(3,"Lentitud de Sistema Operativo","Baja"),
     PROBLEMAS_DE_RED(4, "Problemas de conectividad","Alta"),
     SISTEMA_OPERATIVO(5, "Sistema operativo corrupto","Alta");
 

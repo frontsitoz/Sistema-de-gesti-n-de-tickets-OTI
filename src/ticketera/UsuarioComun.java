@@ -1,13 +1,16 @@
 package ticketera;
 
+import enums.Areas;
+
 public class UsuarioComun extends Usuario {
-    private String areaTrabajo;
-    public UsuarioComun(String username, String contrasena, String areaTrabajo) {
+    private Areas areaTrabajo;
+
+    public UsuarioComun(String username, String contrasena, Areas areaTrabajo) {
         super(username, contrasena, "user");
         this.areaTrabajo = areaTrabajo;
     }
 
-    public String getAreaTrabajo() {
+    public Areas getAreaTrabajo() {
         return areaTrabajo;
     }
 

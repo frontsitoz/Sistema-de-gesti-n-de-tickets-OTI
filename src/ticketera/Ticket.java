@@ -1,33 +1,42 @@
 package ticketera;
 
+import enums.Areas;
+import enums.Estados;
+import enums.TipoIncidente;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 public class Ticket {
     private static int contador = 1;
     private  int id;
     private String resumen;
-    private String descripcion;
-    private String prioridad;
+    private TipoIncidente descripcion;
+    private TipoIncidente prioridad;
     private String solicitante;
-    private String estado;
-    private String asignadoA;
-    private String areaTrabajo;
+    private Estados estado;
+    private String responsable;
+    private Areas areaIncidente;
+    private LocalDateTime fechaCreacion;
 
-    public Ticket(String resumen, String descripcion, String prioridad, String solicitante, String areaTrabajo) {
+    public Ticket(String resumen, TipoIncidente descripcion, TipoIncidente prioridad, String solicitante, Areas areaIncidente) {
         this.id = contador++;
         this.resumen = resumen;
         this.descripcion = descripcion;
         this.prioridad = prioridad;
         this.solicitante = solicitante;
-        this.areaTrabajo = areaTrabajo;
-        this.estado = "Sin asignar";
-        this.asignadoA = "-";
+        this.areaIncidente = areaIncidente;
+        this.estado = Estados.SIN_ASIGNAR;
+        this.responsable = "———————————";
+        this.fechaCreacion = LocalDateTime.now();
     }
 
-    public void setEstado(String estado) {
+    public void setEstado(Estados estado) {
         this.estado = estado;
     }
 
-    public void setAsignadoA(String asignadoA) {
-        this.asignadoA = asignadoA;
+    public void setResponsable(String responsable) {
+        this.responsable = responsable;
     }
 
     public int getId() {
@@ -35,49 +44,39 @@ public class Ticket {
     }
 
     public String getPrioridad() {
-        return prioridad;
+        return prioridad.getPrioridad();
     }
 
     public String getEstado() {
-        return estado;
+        return estado.getDescripcion();
     }
 
-    public static void printTableHeader() {
-        System.out.printf("%-12s %-25s %-35s %-12s %-14s %-40s %-15s %-15s\n",
+    public static void imprimirEncabezadoTabla() {
+        System.out.printf("%-12s %-33s %-25s %-12s %-14s %-40s %-15s %-15s %-20s\n",
                 "TICKET ID",
-                "RESUMEN",
                 "DESCRIPCION",
+                "RESUMEN",
                 "PRIORIDAD",
                 "SOLICITANTE",
                 "AREA",
                 "ESTADO",
-                "RESPONSABLE");
+                "RESPONSABLE",
+                "FECHA / HORA");
     }
-/*
-    @Override
-    public String toString() {
-        return
-                "TicketId=" + id +
-                ", resumen='" + resumen + '\'' +
-                ", descripcion='" + descripcion + '\'' +
-                ", prioridad='" + prioridad + '\'' +
-                ", solicitante='" + solicitante + '\'' +
-                ", área='" + areaTrabajo + '\'' +
-                ", estado='" + estado + '\'' +
-                ", responsable ='" + asignadoA + '\'' +
-                '\n';
-    }*/
+
 
     @Override
     public String toString() {
-        return String.format("%-12s %-25s %-35s %-12s %-14s %-40s %-15s %-15s\n",
+        DateTimeFormatter formatoHora = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        return String.format("%-12s %-33s %-25s %-12s %-14s %-40s %-15s %-15s %-20s",
                 this.id,
+                this.descripcion.getDescripcion(),
                 this.resumen,
-                this.descripcion,
-                this.prioridad,
+                this.prioridad.getPrioridad(),
                 this.solicitante,
-                this.areaTrabajo,
-                this.estado,
-                this.asignadoA);
+                this.areaIncidente.getDescripcion(),
+                this.estado.getDescripcion(),
+                this.responsable,
+                this.fechaCreacion.format(formatoHora));
     }
 }
